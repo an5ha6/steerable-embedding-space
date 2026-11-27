@@ -13,9 +13,15 @@ from steer.engine import prob, unit
 
 ROOT = Path(__file__).parent
 st.set_page_config(page_title="Steerable Embedding Space", layout="wide")
-core = st.cache_resource(show_spinner="Building demo state (first run only; run scripts/build_demo.py to "
-                                      "prebuild)...")(demo_state.core)
-paper_space = st.cache_resource(show_spinner="Loading 1,200 arXiv papers (first run only)...")(demo_state.paper_space)
+core = st.cache_resource(show_spinner="Loading...")(demo_state.core)
+paper_space = st.cache_resource(show_spinner="Loading papers...")(demo_state.paper_space)
+
+
+@st.cache_resource
+def semcor_pool():
+    """Human-labelled (sentence, word, supersense) items cached by scripts/eval_ambiguity.py; empty if absent."""
+    p = ROOT / ".cache" / "semcor_120.json"
+    return json.loads(p.read_text()) if p.exists() else []
 
 
 def neighbors(q, E, texts, k=6):
@@ -120,7 +126,28 @@ with tab3:
         if r["ambiguous"]:
             st.write(dis.clarify(r))
             pick = st.radio("Answer", r["senses"], key=f"pick_{w}", horizontal=True)
-            st.caption(f"Resolved: steering the query toward `{pick}` (direction from sense prototypes).")
+            a = st.slider("Steering strength (α)", 0.0, 0.6, 0.3, 0.05, key=f"a_{w}")
+            qe = embed([txt])[0]
+            qs = unit(qe + a * dis.resolve_direction(w, pick))
+            labs, _, P = dis.senses(w)
+            def soft(v):
+                z = np.exp((P @ v - (P @ v).max()) / dis.tau)
+                return z / z.sum()
+            fig = go.Figure([go.Bar(name="before", x=labs, y=soft(qe)), go.Bar(name="after steering", x=labs, y=soft(qs))])
+            fig.update_layout(barmode="group", height=260, yaxis_range=[0, 1], margin=dict(t=10, b=10))
+            st.plotly_chart(fig, use_container_width=True, key=f"steer_{w}")
+            st.caption(f"Query steered toward `{pick}` with the Problem 5 formula e' = normalize(e + α·d). "
+                       f"cos(original, steered) = {float(qe @ qs):.3f}. The sense profile is read with the same "
+                       "prototypes the direction comes from, so it is expected to move.")
+            pool = [(s, lab) for s, ww, lab in semcor_pool() if ww == w]
+            if len(pool) >= 3:
+                S = embed([s for s, _ in pool])
+                st.markdown(f"**Closest human-labelled SemCor sentences with *{w}*** (gold sense in brackets)")
+                for (s, lab), (s2, lab2) in zip([pool[i] for i in np.argsort(-(S @ qe))[:3]],
+                                                [pool[i] for i in np.argsort(-(S @ qs))[:3]]):
+                    st.markdown(f"- before: {s[:90]} `[{lab}]`  \n  after: **{s2[:90]}** `[{lab2}]`")
+                st.caption("Measured: on real sentences this re-ranking effect is small (e.g. bank → group: "
+                           "0 → 1 of the top 5).")
 
 with tab4:
     st.subheader("Research scope map: 1,200 papers, 8 areas, start-here picks")
