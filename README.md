@@ -14,6 +14,8 @@ python scripts/eval_ambiguity.py         # Problem 6  -> results/ambiguity.json
 python scripts/eval_papers.py            # Problem 1  -> results/papers.json
 python scripts/eval_extras.py            # erasure + steered search -> results/extras.md
 python scripts/eval_robustness.py        # nonlinear readers + text-prefix baseline -> results/robustness.md
+python scripts/bench_scale.py            # CPU speed of steering -> results/scale.md
+pytest                                   # 5 fast unit tests on synthetic data (~5 s)
 python scripts/build_demo.py             # prebuild demo state (~3 min once)
 streamlit run app.py --server.address localhost   # demo, opens in seconds after build_demo
 ```
@@ -138,6 +140,17 @@ Queries are 300 AG News **test** articles per target, drawn from the other class
 | ours (null-space) | 0.150 | 0.708 |
 
 Steering makes the target class **3× more frequent** in search results while staying relevant to the query. **Honest trade-off:** at the same α, naive steering retrieves more of the target class, because it also uses signals shared with neighbouring topics; that's exactly the leakage ours removes. If you want raw strength, raise α; if you want guarantees about the other concepts, use ours.
+
+### Scale and tests (`scripts/bench_scale.py`, `results/scale.md`, `tests/`)
+Steering is one vector addition plus a normalization, so it scales linearly and needs no retraining.
+
+| vectors (384-D, float32) | median time | µs per vector | vectors per second |
+|---|---|---|---|
+| 10,000 | 0.020 s | 2.0 | ~509,000 |
+| 100,000 | 0.34 s | 3.4 | ~292,000 |
+| 1,000,000 (100k chunks) | 2.9 s | 2.9 | ~348,000 |
+
+Building the null-space directions for 4 concepts (4 probes plus a QR projection) takes 0.016 s. The numbers come from one laptop CPU (5 runs, median) and will vary by machine. `pytest` runs 5 unit tests on synthetic data: steering keeps unit norm, α = 0 is the identity, Löwdin rows are orthonormal, null-space leaks less than naive with a monotonic target effect, erasure defeats a fresh probe while a random projection does not, and the fidelity metrics behave as expected.
 
 ### Failure cases
 - **Business** is the hardest concept: contract precision 0.55. It shares vocabulary with sci-tech and world news, so its direction loses the most signal when the other readouts are projected out (gain 0.535 → 0.417).
