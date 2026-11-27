@@ -203,7 +203,7 @@ with tab4:
 
 with tab5:
     st.subheader("Measured evidence")
-    for f in ("steering.md", "extras.md", "steering_all-MiniLM-L6-v2.md"):
+    for f in ("steering.md", "robustness.md", "extras.md", "steering_all-MiniLM-L6-v2.md"):
         p = ROOT / "results" / f
         st.markdown(p.read_text() if p.exists() else "Run `python scripts/eval_steering.py` first.")
     for f in ("ambiguity.json", "papers.json"):

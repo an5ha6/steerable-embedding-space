@@ -13,6 +13,7 @@ python scripts/eval_steering.py          # Problem 5  -> results/steering.md / .
 python scripts/eval_ambiguity.py         # Problem 6  -> results/ambiguity.json
 python scripts/eval_papers.py            # Problem 1  -> results/papers.json
 python scripts/eval_extras.py            # erasure + steered search -> results/extras.md
+python scripts/eval_robustness.py        # nonlinear readers + text-prefix baseline -> results/robustness.md
 python scripts/build_demo.py             # prebuild demo state (~3 min once)
 streamlit run app.py --server.address localhost   # demo, opens in seconds after build_demo
 ```
@@ -98,6 +99,21 @@ UMAP is far better locally; PCA is better globally. The UI says so and shows the
 | all-MiniLM-L6-v2 | 0.085 → 0.016 (5.3×) | 83% | ≈ 0 | 0.72 |
 
 The effect replicates on an encoder with a different architecture and training data, with nothing retuned.
+
+### Is it circular? Nonlinear readers and a text-prefix baseline (`scripts/eval_robustness.py`, `results/robustness.md`)
+Two attacks: *(A)* "linear steering read by linear probes only proves linear algebra", and *(B)* "why not just prepend `Business news: ` to the text?" We re-read every effect with **two nonlinear reader families** (an MLP and a kNN classifier, trained on the probe split, held-out accuracy 0.83–0.98), and add **prefix steering** as a baseline.
+
+| method (α = 0.3) | linear gain / leak | MLP gain / leak | kNN gain / leak | STS-B drop |
+|---|---|---|---|---|
+| random | 0.023 / 0.023 | 0.043 / 0.033 | 0.018 / 0.046 | 0.0008 |
+| naive | 0.555 / 0.095 | 0.810 / 0.106 | 0.493 / 0.127 | 0.0062 |
+| Löwdin-orthogonal | 0.539 / 0.059 | 0.798 / 0.068 | 0.466 / 0.104 | 0.0067 |
+| **null-space (ours)** | 0.460 / **0.016** | 0.698 / **0.027** | 0.372 / **0.083** | 0.0063 |
+| text prefix | 0.139 / 0.035 | 0.234 / 0.049 | 0.120 / 0.053 | 0.0299 |
+
+- **MLP reader:** leakage falls 3.9× vs naive (0.106 → 0.027), keeping 86% of the gain. So the effect is not an artefact of reading with a linear probe.
+- **kNN reader (honest):** leakage falls only 1.5× (0.127 → 0.083), and leak per unit of gain is barely better (0.22 vs 0.26). A reader that compares against nearby labelled examples still sees side effects. Null-space removes what *parametric* readers use, not every trace of the other concepts. kNN's leakage floor is also high (random direction: 0.046), because its probabilities move in steps of 1/15.
+- **Text prefix:** about 3× weaker gain than ours, 5× larger STS-B damage (0.030), and in steered search it barely helps: precision@10 0.068, vs 0.150 for ours and 0.049 unsteered, at the same relevance (0.715). It also can't set a strength, can't erase, and needs the raw text, so it can't steer embeddings that are already stored.
 
 ### Concept erasure (`scripts/eval_extras.py`, `results/extras.md`)
 The flip side of steering: remove a concept so that a linear reader **trained after the erasure**, on data the erasure never saw, cannot recover it. This is iterative null-space projection, and it matters for fairness (e.g. make search blind to sentiment).
