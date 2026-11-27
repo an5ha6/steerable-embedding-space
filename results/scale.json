@@ -1,0 +1,64 @@
+{
+  "system": {
+    "cpu": "Intel64 Family 6 Model 154 Stepping 3, GenuineIntel",
+    "python": "3.12.10",
+    "numpy": "2.5.5",
+    "dtype": "float32",
+    "dimension": 384
+  },
+  "apply": [
+    {
+      "vectors": 10000,
+      "chunk_size": 10000,
+      "repeat_seconds": [
+        0.019996699993498623,
+        0.026147100026719272,
+        0.019572600023820996,
+        0.01854670001193881,
+        0.019651300041005015
+      ],
+      "median_seconds": 0.019651300041005015,
+      "microseconds_per_vector": 1.9651300041005015,
+      "vectors_per_second": 508872.1855110699
+    },
+    {
+      "vectors": 100000,
+      "chunk_size": 100000,
+      "repeat_seconds": [
+        0.24316010001348332,
+        0.3428214999730699,
+        0.3420607000007294,
+        0.3549527999712154,
+        0.35059929999988526
+      ],
+      "median_seconds": 0.3428214999730699,
+      "microseconds_per_vector": 3.4282149997306988,
+      "vectors_per_second": 291696.9910226034
+    },
+    {
+      "vectors": 1000000,
+      "chunk_size": 100000,
+      "repeat_seconds": [
+        2.695816299994476,
+        2.8726170000154525,
+        3.1190357000450604,
+        2.990903999947477,
+        2.5449211000814103
+      ],
+      "median_seconds": 2.8726170000154525,
+      "microseconds_per_vector": 2.8726170000154525,
+      "vectors_per_second": 348114.62857548386
+    }
+  ],
+  "nullspace_direction": {
+    "repeat_seconds": [
+      0.11945790000027046,
+      0.017160699993837625,
+      0.015329199959523976,
+      0.01531819999217987,
+      0.01567839999916032
+    ],
+    "median_seconds": 0.01567839999916032,
+    "fit_vectors_per_side_per_concept": 1200
+  }
+}
