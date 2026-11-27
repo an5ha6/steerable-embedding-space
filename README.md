@@ -98,7 +98,33 @@ UMAP is far better locally; PCA is better globally. The UI says so and shows the
 
 **Definitions:** target words are nouns with ≥ 2 supersenses each covering ≥ 20% of their SemCor occurrences (no safe default). *Clear* = a real SemCor sentence, sense-annotated by humans. *Clear-short* = a short request plus a sense hint ("Tell me about the bank (the place)"), which controls for "the detector just flags short text". *Ambiguous* = a short request with no hint. Words are split dev/test **by word**, and the threshold is fitted on dev only.
 
-AMB_RESULTS
+Test set: 173 unseen words; 1,408 ambiguous, 1,384 clear-in-context, 370 clear-short items.
+
+| detection (test words) | ours (context shift) | first attempt (sense margin, dev) | "flag short text" baseline |
+|---|---|---|---|
+| AUROC, all items | 0.732 | 0.56 | 0.933 |
+| AUROC, **length-matched** (hint vs neutral twin) | **0.546** | — | 0.210 |
+| F1 at the dev-fitted threshold | 0.687 | — | — |
+| false-positive rate, clear in context / clear short | 0.44 / 0.72 | — | — |
+
+| resolution on clear text | accuracy |
+|---|---|
+| ours (nearest sense prototype) | 0.410 |
+| WordNet first sense | 0.494 |
+| random | 0.280 |
+
+| end-to-end correct handling (ask when ambiguous; otherwise don't ask and resolve right) | rate |
+|---|---|
+| **ours** | **0.487** |
+| always ask | 0.445 |
+| always guess first sense | 0.274 |
+
+**Honest reading:** this bonus is a working prototype, not a strong result.
+- End to end, the system beats both trivial policies (0.487 vs 0.445 vs 0.274).
+- On the length-matched control, where only the hint differs, detection is close to chance (0.546). Most of the all-items AUROC comes from context length, not sense information. We built that control specifically to expose this.
+- Sense resolution loses to the WordNet first-sense heuristic. Note that this heuristic is itself derived from SemCor counts, so it has an advantage here.
+
+Next step: a contextual encoder at the *token* level instead of a sentence embedding.
 
 ## Bonus: Problem 1, research scope map (`steer/papers.py`)
 

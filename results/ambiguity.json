@@ -4,22 +4,22 @@
   "test": 173
  },
  "n_test_items": {
-  "ambiguous": 1038,
+  "ambiguous": 1408,
   "clear_in_context": 1384,
   "clear_short_with_hint": 370
  },
- "threshold_margin": 0.06540434162480926,
- "dev_f1": 0.6366932559825961,
+ "threshold_margin": 0.07069900731904602,
+ "dev_f1": 0.6821793416572077,
  "detection_test": {
-  "auroc": 0.7575082992246734,
-  "auroc_short_only": 0.6755272613654117,
-  "baseline_shortness_auroc": 0.9724914481185861,
-  "baseline_shortness_auroc_short_only": 0.8740990990990991,
-  "precision": 0.5178997613365155,
-  "recall": 0.8362235067437379,
-  "f1": 0.6396462785556374,
-  "false_positive_rate_in_context": 0.40895953757225434,
-  "false_positive_rate_short_with_hint": 0.654054054054054
+  "auroc": 0.73183535036799,
+  "auroc_length_matched": 0.545573411249087,
+  "baseline_shortness_auroc": 0.9325053287291386,
+  "baseline_shortness_auroc_length_matched": 0.20993425858290718,
+  "precision": 0.5773694390715667,
+  "recall": 0.8480113636363636,
+  "f1": 0.6869965477560415,
+  "false_positive_rate_in_context": 0.440028901734104,
+  "false_positive_rate_short_with_hint": 0.7162162162162162
  },
  "resolution_test_on_clear_text": {
   "ours_accuracy": 0.4104903078677309,
@@ -27,118 +27,118 @@
   "random": 0.27969403268719123
  },
  "correct_handling_rate": {
-  "ours": 0.44197707736389685,
-  "always_guess_first_sense": 0.3105300859598854,
-  "always_ask": 0.37177650429799425
+  "ours": 0.48671726755218214,
+  "always_guess_first_sense": 0.27419354838709675,
+  "always_ask": 0.4452877925363694
  },
  "examples": [
   {
-   "text": "Where is the cost?",
-   "word": "cost",
-   "gold": null,
-   "ambiguous": true,
-   "flagged": true,
-   "pred": "noun.possession",
-   "margin": 0.02
-  },
-  {
-   "text": "Dewey Lawrence , a Tyler lawyer representing the Texas Bankers Association , sounded the opposition keynote when he said it would force banks to violate their c",
-   "word": "bank",
-   "gold": "noun.group",
-   "ambiguous": false,
-   "flagged": false,
-   "pred": "noun.possession",
-   "margin": 0.068
-  },
-  {
-   "text": "Tell me about the soil (the condition).",
-   "word": "soil",
-   "gold": "noun.state",
-   "ambiguous": false,
-   "flagged": false,
-   "pred": "noun.state",
-   "margin": 0.067
-  },
-  {
-   "text": "Where is the sin?",
-   "word": "sin",
+   "text": "reality",
+   "word": "reality",
    "gold": null,
    "ambiguous": true,
    "flagged": true,
    "pred": "noun.attribute",
-   "margin": 0.056
+   "margin": 0.0
   },
   {
-   "text": "From the equilibrium sorption data which are available , it seems logical to expect that polyphosphate ions would be strongly sorbed on the surface of the dirt ",
-   "word": "dirt",
-   "gold": "noun.state",
-   "ambiguous": false,
-   "flagged": true,
-   "pred": "noun.state",
-   "margin": 0.004
-  },
-  {
-   "text": "They were put on control diets to determine as accurately as possible , the normal cholesterol level of their blood .",
-   "word": "level",
+   "text": "The House passed finally , and sent to the Senate , a bill extending the State Health Department 's authority to give planning assistance to cities .",
+   "word": "authority",
    "gold": "noun.attribute",
    "ambiguous": false,
    "flagged": false,
    "pred": "noun.attribute",
-   "margin": 0.08
+   "margin": 0.088
   },
   {
-   "text": "This result suggests a very high temperature at the solid surface of the planet , although there is the possibility that the observed radiation may be a combina",
-   "word": "possibility",
-   "gold": "noun.cognition",
-   "ambiguous": false,
-   "flagged": true,
-   "pred": "noun.state",
-   "margin": 0.007
-  },
-  {
-   "text": "A good feeling prevailed on the SMU coaching staff Monday , but attention quickly turned from Saturday 's victory to next week 's problem : Rice University .",
-   "word": "attention",
-   "gold": "noun.cognition",
-   "ambiguous": false,
-   "flagged": true,
-   "pred": "noun.attribute",
-   "margin": 0.042
-  },
-  {
-   "text": "Where is the arrangement?",
-   "word": "arrangement",
-   "gold": null,
-   "ambiguous": true,
-   "flagged": true,
-   "pred": "noun.attribute",
-   "margin": 0.061
-  },
-  {
-   "text": "What do you think of the court?",
-   "word": "court",
+   "text": "Where is the background?",
+   "word": "background",
    "gold": null,
    "ambiguous": true,
    "flagged": false,
    "pred": "noun.artifact",
-   "margin": 0.076
+   "margin": 0.079
   },
   {
-   "text": "land",
-   "word": "land",
+   "text": "the country",
+   "word": "country",
    "gold": null,
    "ambiguous": true,
    "flagged": true,
-   "pred": "noun.object",
-   "margin": 0.0
+   "pred": "noun.group",
+   "margin": 0.014
   },
   {
-   "text": "The brush moves up and down and is small enough to clean every dental surface , including the back of the teeth .",
-   "word": "back",
-   "gold": "noun.artifact",
+   "text": "The most active preparations obtained by these two groups of investigators appear to be similar in potency , composition and physical properties .",
+   "word": "composition",
+   "gold": "noun.attribute",
    "ambiguous": false,
    "flagged": true,
-   "pred": "noun.location",
-   "margin": 0.045
+   "pred": "noun.substance",
+   "margin": 0.067
+  },
+  {
+   "text": "- How much will wind , rain , sun , and temperature affect the use ?",
+   "word": "sun",
+   "gold": "noun.phenomenon",
+   "ambiguous": false,
+   "flagged": false,
+   "pred": "noun.phenomenon",
+   "margin": 0.104
+  },
+  {
+   "text": "The washing process whereby soils are removed consists basically of applying mechanical action to loosen the dirt particles and dried matter in the presence of ",
+   "word": "extent",
+   "gold": "noun.state",
+   "ambiguous": false,
+   "flagged": true,
+   "pred": "noun.state",
+   "margin": 0.038
+  },
+  {
+   "text": "Texas ' 545 - yard spree against Washington State gave the Longhorns a 3 - game total offense of 1512 yards ( 1065 rushing and 447 passing ) a new SWC high .",
+   "word": "yard",
+   "gold": "noun.quantity",
+   "ambiguous": false,
+   "flagged": false,
+   "pred": "noun.quantity",
+   "margin": 0.133
+  },
+  {
+   "text": "Tell me about the behavior (the action).",
+   "word": "behavior",
+   "gold": "noun.act",
+   "ambiguous": false,
+   "flagged": true,
+   "pred": "noun.state",
+   "margin": 0.032
+  },
+  {
+   "text": "the tension",
+   "word": "tension",
+   "gold": null,
+   "ambiguous": true,
+   "flagged": true,
+   "pred": "noun.act",
+   "margin": 0.021
+  },
+  {
+   "text": "Tell me about the sentence.",
+   "word": "sentence",
+   "gold": null,
+   "ambiguous": true,
+   "flagged": true,
+   "pred": "noun.communication",
+   "margin": 0.018
+  },
+  {
+   "text": "West Berlin morale is low and , in age distribution , the situation is unfavorable .",
+   "word": "age",
+   "gold": "noun.attribute",
+   "ambiguous": false,
+   "flagged": true,
+   "pred": "noun.attribute",
+   "margin": 0.005
   }
  ],
  "test_words": [
