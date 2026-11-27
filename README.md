@@ -6,6 +6,7 @@
 Everything runs on a laptop CPU. One command reproduces every number in this file.
 
 ```
+# Windows: clone to a short path (e.g. C:\src) or enable long paths; torch's wheel exceeds 260 chars otherwise.
 python -m venv .venv && .venv\Scripts\activate
 pip install -r requirements.txt          # CPU torch: pip install torch --index-url https://download.pytorch.org/whl/cpu
 python scripts/eval_steering.py          # Problem 5  -> results/steering.md / .json
