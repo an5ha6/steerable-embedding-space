@@ -171,6 +171,22 @@ class Contract:
                 "verified": gain >= need - 1e-6, "verifier_gain": gain, "margin": self.margin.get(concept, 0.0)}
 
 
+def erase_basis(pos, neg, iters=8, seed=0):
+    """Iterative null-space projection: repeatedly fit a linear probe and project its direction out,
+    until no linear reader can recover the concept. Returns an orthonormal basis Q (dim, iters)."""
+    Q = np.zeros((pos.shape[1], 0))
+    for i in range(iters):
+        P, N = pos - (pos @ Q) @ Q.T, neg - (neg @ Q) @ Q.T
+        w = fit_probe(P, N, seed=seed + i, n=len(pos)).coef_[0]
+        w = w - Q @ (Q.T @ w)
+        Q = np.column_stack([Q, unit(w)])
+    return Q
+
+
+def erase(E, Q):
+    return unit(E - (E @ Q) @ Q.T)
+
+
 def monotonicity(probe, E, d, grid):
     """Mean per-sentence Spearman(alpha, probe prob)."""
     P = np.stack([prob(probe, apply(E, d, a)) for a in grid], 1)

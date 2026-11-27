@@ -13,11 +13,12 @@ import numpy as np
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 from steer import data, fidelity  # noqa: E402
-from steer.encoder import embed  # noqa: E402
+from steer.encoder import MODEL_NAME, embed  # noqa: E402
 from steer.engine import METHODS, Contract, Steerer, apply, fit_probe, monotonicity, prob, sts_quality  # noqa: E402
 
 GRID = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
 OUT = ROOT / "results"
+SUFFIX = "" if MODEL_NAME == "BAAI/bge-small-en-v1.5" else "_" + MODEL_NAME.split("/")[-1]
 
 
 def ci(x, n=1000, seed=0):
@@ -45,7 +46,7 @@ def main():
 
     st = Steerer(emb)
     evalp = {c: fit_probe(emb[c]["pos"]["probe"], emb[c]["neg"]["probe"], seed=1) for c in st.concepts}
-    res = {"model": "BAAI/bge-small-en-v1.5", "concepts": st.concepts, "grid": GRID,
+    res = {"model": MODEL_NAME, "concepts": st.concepts, "grid": GRID,
            "n_test_per_concept": {c: len(emb[c]["neg"]["test"]) for c in st.concepts},
            "sts_test_pairs": int(len(test)), "sts_base_spearman": float(q0)}
 
@@ -131,8 +132,8 @@ def main():
     res["runtime_sec"] = round(time.time() - t0, 1)
 
     OUT.mkdir(exist_ok=True)
-    (OUT / "steering.json").write_text(json.dumps(res, indent=1))
-    (OUT / "steering.md").write_text(to_markdown(res))
+    (OUT / f"steering{SUFFIX}.json").write_text(json.dumps(res, indent=1))
+    (OUT / f"steering{SUFFIX}.md").write_text(to_markdown(res))
     print(to_markdown(res))
 
 

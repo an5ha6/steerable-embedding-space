@@ -12,6 +12,7 @@ pip install -r requirements.txt          # CPU torch: pip install torch --index-
 python scripts/eval_steering.py          # Problem 5  -> results/steering.md / .json
 python scripts/eval_ambiguity.py         # Problem 6  -> results/ambiguity.json
 python scripts/eval_papers.py            # Problem 1  -> results/papers.json
+python scripts/eval_extras.py            # erasure + steered search -> results/extras.md
 python scripts/build_demo.py             # prebuild demo state (~3 min once)
 streamlit run app.py --server.address localhost   # demo, opens in seconds after build_demo
 ```
@@ -87,6 +88,40 @@ Honest reading: the contract uses the *smallest* α that should reach the target
 | **UMAP (used)** | **0.925** | **0.936** | **0.352** | 0.597 |
 
 UMAP is far better locally; PCA is better globally. The UI says so and shows these numbers next to the map. Steered points placed with `transform` keep only 0.18 of their true kNN, so the drawn steering path is a guide, not a measurement. Claims come from the 384-D numbers.
+
+### Does it generalize? Same evaluation, second encoder (`results/steering_all-MiniLM-L6-v2.md`)
+`STEER_MODEL=sentence-transformers/all-MiniLM-L6-v2 python scripts/eval_steering.py`
+
+| encoder | leakage naive → ours | gain kept | STS-B drop (α=0.3) | contract claim precision |
+|---|---|---|---|---|
+| bge-small-en-v1.5 | 0.095 → 0.016 (5.9×) | 83% | 0.006 | 0.81 |
+| all-MiniLM-L6-v2 | 0.085 → 0.016 (5.3×) | 83% | ≈ 0 | 0.72 |
+
+The effect replicates on an encoder with a different architecture and training data, with nothing retuned.
+
+### Concept erasure (`scripts/eval_extras.py`, `results/extras.md`)
+The flip side of steering: remove a concept so that a linear reader **trained after the erasure**, on data the erasure never saw, cannot recover it. This is iterative null-space projection, and it matters for fairness (e.g. make search blind to sentiment).
+
+| concept | reader accuracy before | after removing 4 dims (ours) | after removing 4 random dims | other concepts' accuracy | STS-B drop |
+|---|---|---|---|---|---|
+| sentiment | 0.870 | **0.563** | 0.873 | 0.916 → 0.917 | 0.006 |
+| sports | 0.977 | **0.608** | 0.975 | 0.881 → 0.854 | 0.001 |
+| business | 0.870 | **0.638** | 0.867 | 0.916 → 0.904 | 0.001 |
+| sci-tech | 0.902 | **0.582** | 0.898 | 0.906 → 0.880 | 0.002 |
+
+Chance is 0.5. Four of 384 dimensions remove most of the linearly readable signal, while removing random dimensions does nothing. Erasure saturates around 0.56–0.64, not 0.5, so some signal is left that a linear reader can't fully strip with this method. Erasing sports costs the other topics a few points, because the topics overlap.
+
+### Downstream: steered search (`results/extras.md`)
+Queries are 300 AG News **test** articles per target, drawn from the other classes. We retrieve the top 10 from all 7,600 test articles.
+
+| method (α = 0.3) | precision@10 of target class | relevance to original query |
+|---|---|---|
+| unsteered | 0.049 | 0.717 |
+| random direction | 0.049 | 0.715 |
+| naive | **0.205** | 0.704 |
+| ours (null-space) | 0.150 | 0.708 |
+
+Steering makes the target class **3× more frequent** in search results while staying relevant to the query. **Honest trade-off:** at the same α, naive steering retrieves more of the target class, because it also uses signals shared with neighbouring topics; that's exactly the leakage ours removes. If you want raw strength, raise α; if you want guarantees about the other concepts, use ours.
 
 ### Failure cases
 - **Business** is the hardest concept: contract precision 0.55. It shares vocabulary with sci-tech and world news, so its direction loses the most signal when the other readouts are projected out (gain 0.535 → 0.417).

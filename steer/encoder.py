@@ -1,10 +1,12 @@
 """Frozen sentence encoder with an on-disk embedding cache."""
 import hashlib
+import os
 from pathlib import Path
 
 import numpy as np
 
-MODEL_NAME = "BAAI/bge-small-en-v1.5"
+# Override to test that the method is encoder-agnostic, e.g. STEER_MODEL=sentence-transformers/all-MiniLM-L6-v2
+MODEL_NAME = os.environ.get("STEER_MODEL", "BAAI/bge-small-en-v1.5")
 CACHE = Path(__file__).resolve().parent.parent / ".cache" / "emb"
 _model = None
 
@@ -21,7 +23,7 @@ def embed(texts, use_cache=True):
     """Unit-normalized embeddings, shape (n, 384)."""
     texts = list(texts)
     if not texts:
-        return np.zeros((0, 384), dtype=np.float32)
+        return np.zeros((0, model().get_sentence_embedding_dimension()), dtype=np.float32)
     key = hashlib.sha1((MODEL_NAME + "\x00" + "\x01".join(texts)).encode()).hexdigest()
     path = CACHE / f"{key}.npy"
     if use_cache and path.exists():
