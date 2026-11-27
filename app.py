@@ -6,43 +6,16 @@ import numpy as np
 import plotly.graph_objects as go
 import streamlit as st
 
-from steer import data, fidelity, papers
+from steer import demo_state
 from steer.ambiguity import Disambiguator, coarse_senses
 from steer.encoder import embed
-from steer.engine import Contract, Steerer, prob, unit
+from steer.engine import prob, unit
 
 ROOT = Path(__file__).parent
 st.set_page_config(page_title="Steerable Embedding Space", layout="wide")
-
-
-@st.cache_resource(show_spinner="Embedding datasets (first run only)...")
-def core():
-    concepts = data.load_concepts()
-    emb = {c: {s: {sp: embed(t) for sp, t in v[s].items()} for s in ("pos", "neg")} for c, v in concepts.items()}
-    stx = Steerer(emb)
-    s1, s2, gold = data.load_stsb()
-    half = np.random.default_rng(0).permutation(len(gold))[: len(gold) // 2]
-    contract = Contract(stx, emb, (embed(s1)[half], embed(s2)[half], gold[half]))
-    texts, labels, E = [], [], []
-    for c, v in concepts.items():
-        for s in ("pos", "neg"):
-            texts += v[s]["test"]
-            labels += [f"{c}{'+' if s == 'pos' else '-'}"] * len(v[s]["test"])
-            E.append(emb[c][s]["test"])
-    E = np.vstack(E)
-    Y, red = fidelity.project(E, "umap")
-    fid = fidelity.report(E[::3], Y[::3])
-    return stx, contract, texts, np.array(labels), E, Y, red, fid
-
-
-@st.cache_resource(show_spinner="Loading 1,200 arXiv papers (first run only)...")
-def paper_space():
-    P = papers.load_papers()
-    texts = [papers.text(p) for p in P]
-    E = embed(texts)
-    lab, names, start = papers.scope_map(E, texts, len(papers.CATS))
-    Y, _ = fidelity.project(E, "umap")
-    return P, E, lab, names, start, Y
+core = st.cache_resource(show_spinner="Building demo state (first run only; run scripts/build_demo.py to "
+                                      "prebuild)...")(demo_state.core)
+paper_space = st.cache_resource(show_spinner="Loading 1,200 arXiv papers (first run only)...")(demo_state.paper_space)
 
 
 def neighbors(q, E, texts, k=6):
@@ -124,6 +97,10 @@ with tab2:
 
 with tab3:
     st.subheader("Is this ambiguous? If so, ask, then steer to the chosen meaning")
+    st.info("Prototype. Measured on 173 unseen words: beats 'always ask' and 'always guess' end to end "
+            "(0.487 vs 0.445 / 0.274 correct handling), but on length-matched pairs detection is near chance "
+            "(AUROC 0.55), so the flag mostly reacts to how much context there is. The person stays in the loop: "
+            "they confirm the meaning, and the choice is applied as a steering direction.")
     dis = Disambiguator()
     res_path = ROOT / "results" / "ambiguity.json"
     if res_path.exists():

@@ -11,7 +11,8 @@ pip install -r requirements.txt          # CPU torch: pip install torch --index-
 python scripts/eval_steering.py          # Problem 5  -> results/steering.md / .json
 python scripts/eval_ambiguity.py         # Problem 6  -> results/ambiguity.json
 python scripts/eval_papers.py            # Problem 1  -> results/papers.json
-streamlit run app.py --server.address localhost   # demo (first load ~3 min, then cached)
+python scripts/build_demo.py             # prebuild demo state (~3 min once)
+streamlit run app.py --server.address localhost   # demo, opens in seconds after build_demo
 ```
 
 ## What we built
@@ -124,7 +125,16 @@ Test set: 173 unseen words; 1,408 ambiguous, 1,384 clear-in-context, 370 clear-s
 - On the length-matched control, where only the hint differs, detection is close to chance (0.546). Most of the all-items AUROC comes from context length, not sense information. We built that control specifically to expose this.
 - Sense resolution loses to the WordNet first-sense heuristic. Note that this heuristic is itself derived from SemCor counts, so it has an advantage here.
 
-Next step: a contextual encoder at the *token* level instead of a sentence embedding.
+**What we tried to fix it (dev words only, length-matched AUROC):**
+
+| variant | matched AUROC |
+|---|---|
+| context-shift, sentence embedding (shipped) | 0.55 |
+| token-level contextual vectors (last 4 layers) | 0.48–0.49 |
+| embedding-space Lesk (context words vote for glosses) | 0.56 |
+| zero-shot NLI cross-encoder (DeBERTa-v3-small) | 0.58 |
+
+None reached our 0.65 bar, so we stopped. Small encoders don't know that "(the place)" picks the riverbank sense of *bank*. A model with world knowledge (an LLM) is the obvious next step; we did not test it.
 
 ## Bonus: Problem 1, research scope map (`steer/papers.py`)
 
@@ -146,5 +156,6 @@ steer/fidelity.py   trustworthiness, continuity, kNN preservation, out-of-sample
 steer/ambiguity.py  bonus #6
 steer/papers.py     bonus #1
 scripts/eval_*.py   reproducible evaluations -> results/
+steer/demo_state.py demo state built once, cached in .cache/demo
 app.py              Streamlit demo (5 tabs, incl. live evidence)
 ```
