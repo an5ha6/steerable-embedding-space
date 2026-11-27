@@ -1,5 +1,6 @@
 """Demo UI. Run: streamlit run app.py"""
 import json
+from collections import Counter
 from pathlib import Path
 
 import numpy as np
@@ -120,34 +121,62 @@ with tab3:
         st.info("No noun with multiple coarse senses found.")
     for w in cands:
         r = dis.analyze(txt, w)
-        st.markdown(f"**{w}**: context evidence {r['margin']:.3f} (ambiguous if ≤ {dis.threshold:.3f}) → "
-                    + ("🟠 **ambiguous**" if r["ambiguous"] else f"🟢 clear: `{r['best']}`"))
-        st.bar_chart({lab: p for lab, p in zip(r["senses"], r["probs"])}, height=180)
-        if r["ambiguous"]:
-            st.write(dis.clarify(r))
-            pick = st.radio("Answer", r["senses"], key=f"pick_{w}", horizontal=True)
+        with st.container(border=True):
+            st.markdown(f"### Word: *{w}*")
+            st.markdown(f"**1. Detection.** Context evidence {r['margin']:.3f} (ambiguous if ≤ {dis.threshold:.3f}) → "
+                        + ("🟠 **ambiguous**: ask the user" if r["ambiguous"]
+                           else f"🟢 **clear**, no question asked. Model's sense guess: `{r['best']}`"))
+            st.caption(f"Model's sense guess for *{w}* (nearest WordNet sense prototype; this is not the user's choice)")
+            st.bar_chart({lab: p for lab, p in zip(r["senses"], r["probs"])}, height=160)
+            if not r["ambiguous"]:
+                continue
+            st.markdown(f"**2. Clarify.** {dis.clarify(r)}")
+            pick = st.radio("User's answer", r["senses"], key=f"pick_{w}", horizontal=True)
             a = st.slider("Steering strength (α)", 0.0, 0.6, 0.3, 0.05, key=f"a_{w}")
             qe = embed([txt])[0]
             qs = unit(qe + a * dis.resolve_direction(w, pick))
             labs, _, P = dis.senses(w)
+
             def soft(v):
                 z = np.exp((P @ v - (P @ v).max()) / dis.tau)
                 return z / z.sum()
+            st.markdown(f"**3. Steering feedback** (toward `{pick}`; by construction, not evidence)")
             fig = go.Figure([go.Bar(name="before", x=labs, y=soft(qe)), go.Bar(name="after steering", x=labs, y=soft(qs))])
-            fig.update_layout(barmode="group", height=260, yaxis_range=[0, 1], margin=dict(t=10, b=10))
+            fig.update_layout(barmode="group", height=240, yaxis_range=[0, 1], margin=dict(t=10, b=10))
             st.plotly_chart(fig, use_container_width=True, key=f"steer_{w}")
-            st.caption(f"Query steered toward `{pick}` with the Problem 5 formula e' = normalize(e + α·d). "
-                       f"cos(original, steered) = {float(qe @ qs):.3f}. The sense profile is read with the same "
-                       "prototypes the direction comes from, so it is expected to move.")
+            st.caption(f"e' = normalize(e + α·d), d = prototype(`{pick}`) minus the mean of the other prototypes. "
+                       f"cos(original, steered) = {float(qe @ qs):.3f}. This chart is read with the same prototypes "
+                       "that build d, so it always moves toward the pick: it shows the steering ran, nothing more.")
+
+            st.markdown("**4. Independent check: re-rank human-labelled SemCor sentences**")
             pool = [(s, lab) for s, ww, lab in semcor_pool() if ww == w]
-            if len(pool) >= 3:
-                S = embed([s for s, _ in pool])
-                st.markdown(f"**Closest human-labelled SemCor sentences with *{w}*** (gold sense in brackets)")
-                for (s, lab), (s2, lab2) in zip([pool[i] for i in np.argsort(-(S @ qe))[:3]],
-                                                [pool[i] for i in np.argsort(-(S @ qs))[:3]]):
-                    st.markdown(f"- before: {s[:90]} `[{lab}]`  \n  after: **{s2[:90]}** `[{lab2}]`")
-                st.caption("Measured: on real sentences this re-ranking effect is small (e.g. bank → group: "
-                           "0 → 1 of the top 5).")
+            if not pool:
+                st.info(f"No human-labelled SemCor sentences with *{w}* available (run scripts/eval_ambiguity.py), "
+                        "so the pick cannot be checked independently.")
+                continue
+            S = embed([s for s, _ in pool])
+            gold = np.array([lab for _, lab in pool])
+            b, s_ = S @ qe, S @ qs
+            ob, oa = np.argsort(-b), np.argsort(-s_)
+            rank_b = np.empty(len(pool), int)
+            rank_b[ob] = np.arange(1, len(pool) + 1)
+            k = min(5, len(pool))
+            n_match = int((gold == pick).sum())
+            dist = ", ".join(f"`{lab}` {c}" for lab, c in Counter(gold).most_common())
+            if n_match == 0:
+                st.warning(f"None of the {len(pool)} labelled sentences with *{w}* has sense `{pick}` ({dist}). "
+                           "This check cannot confirm the pick: steering can only reorder sentences of other senses.")
+            c1, c2 = st.columns(2)
+            c1.markdown(f"Before steering (top {k} of {len(pool)})")
+            c1.dataframe([{"rank": i + 1, "score": round(float(b[j]), 3), "gold sense": gold[j],
+                           "sentence": pool[j][0][:120]} for i, j in enumerate(ob[:k])], hide_index=True)
+            c2.markdown(f"After steering toward `{pick}` (top {k})")
+            c2.dataframe([{"rank": i + 1, "was": int(rank_b[j]), "score": round(float(s_[j]), 3),
+                           "gold sense": gold[j], "match": "✓" if gold[j] == pick else "",
+                           "sentence": pool[j][0][:120]} for i, j in enumerate(oa[:k])], hide_index=True)
+            st.caption(f"Sentences whose human label is `{pick}` in the top {k}: {int((gold[ob[:k]] == pick).sum())} "
+                       f"before → {int((gold[oa[:k]] == pick).sum())} after ({n_match} of {len(pool)} in the pool: "
+                       f"{dist}). Tiny pools, so this is an illustration, not a measurement.")
 
 with tab4:
     st.subheader("Research scope map: 1,200 papers, 8 areas, start-here picks")
