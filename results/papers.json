@@ -1,0 +1,98 @@
+{
+ "n_papers": 1200,
+ "per_category": {
+  "cs.CV": 150,
+  "cs.CL": 150,
+  "cs.LG": 150,
+  "cs.CR": 150,
+  "cs.RO": 150,
+  "cs.DB": 150,
+  "cs.NI": 150,
+  "cs.SE": 150
+ },
+ "seeds": [
+  0,
+  1,
+  2,
+  3,
+  4
+ ],
+ "clustering": {
+  "ours_embedding": {
+   "nmi": [
+    0.7547195125661004,
+    0.004222782300305738
+   ],
+   "ari": [
+    0.7460107103354869,
+    0.005305067554588833
+   ]
+  },
+  "baseline_tfidf_lsa": {
+   "nmi": [
+    0.5800481159835909,
+    0.008746668697059133
+   ],
+   "ari": [
+    0.46046400641364754,
+    0.009536308706793024
+   ]
+  }
+ },
+ "clusters": [
+  {
+   "name": "warehouses, data warehouses, complex data, warehouse",
+   "size": 121,
+   "start_here": "Hyperset Approach to Semi-structured Databases and the Experimental Implementation of the Query Language Delta",
+   "majority_category": "cs.DB"
+  },
+  {
+   "name": "segmentation, 2d, pixels, 3d",
+   "size": 145,
+   "start_here": "Polynomial time algorithms for bi-criteria, multi-objective and ratio problems in clustering and imaging. Part I: Normalized cut and ratio regions",
+   "majority_category": "cs.CV"
+  },
+  {
+   "name": "manipulators, kinematic, orthoglide, manipulator",
+   "size": 137,
+   "start_here": "Kinematics and Workspace Analysis of a Three-Axis Parallel Manipulator: the Orthoglide",
+   "majority_category": "cs.RO"
+  },
+  {
+   "name": "regret, lasso, regularization, collaborative filtering",
+   "size": 169,
+   "start_here": "Statistical Learning of Arbitrary Computable Classifiers",
+   "majority_category": "cs.LG"
+  },
+  {
+   "name": "802, routing, 802 11, ieee 802",
+   "size": 160,
+   "start_here": "Early Experiences in Traffic Engineering Exploiting Path Diversity: A Practical Approach",
+   "majority_category": "cs.NI"
+  },
+  {
+   "name": "spreadsheet, spreadsheets, audit, plm",
+   "size": 155,
+   "start_here": "A Structured Methodology for Spreadsheet Modelling",
+   "majority_category": "cs.SE"
+  },
+  {
+   "name": "secret, encryption, cipher, attacks",
+   "size": 151,
+   "start_here": "An Algebraic Characterization of Security of Cryptographic Protocols",
+   "majority_category": "cs.CR"
+  },
+  {
+   "name": "linguistic, lexicon, lexical, sentences",
+   "size": 162,
+   "start_here": "Analyse spectrale des textes: d\\'etection automatique des fronti\\`eres de langue et de discours",
+   "majority_category": "cs.CL"
+  }
+ ],
+ "map_fidelity_umap": {
+  "trustworthiness": 0.9526033488110314,
+  "continuity": 0.9525856901646265,
+  "knn_preservation": 0.41,
+  "distance_spearman": 0.5221951534724717
+ }
+}

@@ -1,0 +1,10 @@
+torch
+sentence-transformers
+datasets
+scikit-learn
+umap-learn
+streamlit
+plotly
+pandas
+scipy
+nltk
