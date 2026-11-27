@@ -10,7 +10,7 @@ import streamlit as st
 from steer import demo_state
 from steer.ambiguity import Disambiguator, coarse_senses
 from steer.encoder import embed
-from steer.engine import prob, unit
+from steer.engine import apply, fit_probe, prob, unit
 
 ROOT = Path(__file__).parent
 st.set_page_config(page_title="Steerable Embedding Space", layout="wide")
@@ -56,6 +56,49 @@ with tab1:
         st.markdown("**Nearest neighbours: before → after**")
         for (a, sa), (b, sb) in zip(neighbors(e[0], E, texts), neighbors(s[0], E, texts)):
             st.markdown(f"- ~~{a[:90]}~~  \n  → **{b[:90]}** ({sb:.2f})" if a != b else f"- {a[:90]} ({sa:.2f})")
+
+    st.divider()
+    st.subheader("Make your own concept: type examples, get a protected direction")
+    st.caption("A few sentences with and without your concept define it. The null-space direction is built the same "
+               "way as for the built-in concepts: what the 4 built-in readers look at is projected out.")
+    ca, cb = st.columns(2)
+    pos_txt = ca.text_area("Sentences WITH the concept (one per line)", height=160, value="\n".join([
+        "We regret to inform you that the meeting has been postponed.",
+        "Please find the requested documents attached for your review.",
+        "The committee will convene to discuss the proposal next week.",
+        "Kindly confirm your attendance at your earliest convenience.",
+        "We appreciate your patience while we resolve this matter."]))
+    neg_txt = cb.text_area("Sentences WITHOUT it (one per line)", height=160, value="\n".join([
+        "hey the meeting got pushed, my bad",
+        "here's the stuff you wanted lol",
+        "we're gonna chat about it next week",
+        "u coming or nah?",
+        "thanks for hanging in there!!"]))
+    pos_l = [s.strip() for s in pos_txt.splitlines() if s.strip()]
+    neg_l = [s.strip() for s in neg_txt.splitlines() if s.strip()]
+    if min(len(pos_l), len(neg_l)) < 3:
+        st.warning("Give at least 3 sentences on each side.")
+    else:
+        Pc, Nc = embed(pos_l), embed(neg_l)
+        raw = Pc.mean(0) - Nc.mean(0)
+        Q, _ = np.linalg.qr(np.stack([unit(stx.verifier[c].coef_[0]) for c in stx.concepts]).T)
+        dirs_c = {"naive": unit(raw), "nullspace (ours)": unit(raw - Q @ (Q.T @ raw))}
+        reader = fit_probe(Pc, Nc)
+        ac = st.slider("Strength (α) toward your concept", 0.0, 0.6, 0.3, 0.05, key="custom_a")
+        p0 = {c: prob(stx.verifier[c], e)[0] for c in stx.concepts}
+        rows = []
+        for name, dc in dirs_c.items():
+            sc = apply(e, dc, ac)
+            rows.append({"method": name,
+                         "your concept: P before → after": f"{prob(reader, e)[0]:.2f} → {prob(reader, sc)[0]:.2f}",
+                         "leakage (mean |Δ| on 4 built-ins)": round(float(np.mean(
+                             [abs(prob(stx.verifier[c], sc)[0] - p0[c]) for c in stx.concepts])), 3),
+                         **{f"{c} after": round(float(prob(stx.verifier[c], sc)[0]), 2) for c in stx.concepts},
+                         "cos to original": round(float(e[0] @ sc[0]), 3)})
+        st.dataframe(rows, hide_index=True)
+        st.caption(f"Query: “{q}”. Built-ins before: " + ", ".join(f"{c} {v:.2f}" for c, v in p0.items())
+                   + ". Your-concept reader is trained on only your examples, so treat its probability as a rough "
+                   "guide; leakage is read by the built-in verifier probes.")
 
     st.divider()
     st.subheader("Steering contract: ask for an effect, set a budget, get a guarantee or a refusal")
