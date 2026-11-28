@@ -53,7 +53,7 @@ with tab1:
         st.plotly_chart(fig, use_container_width=True)
         st.caption(f"cos(original, steered) = {float(e[0] @ s[0]):.3f}")
     with right:
-        st.markdown("**Nearest neighbours: before → after**")
+        st.markdown("**Search results: before → after**")
         for (a, sa), (b, sb) in zip(neighbors(e[0], E, texts), neighbors(s[0], E, texts)):
             st.markdown(f"- ~~{a[:90]}~~  \n  → **{b[:90]}** ({sb:.2f})" if a != b else f"- {a[:90]} ({sa:.2f})")
 
