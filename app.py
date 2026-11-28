@@ -1,6 +1,5 @@
 """Demo UI. Run: streamlit run app.py"""
 import json
-from collections import Counter
 from pathlib import Path
 
 import numpy as np
@@ -16,13 +15,6 @@ ROOT = Path(__file__).parent
 st.set_page_config(page_title="Steerable Embedding Space", layout="wide")
 core = st.cache_resource(show_spinner="Loading...")(demo_state.core)
 paper_space = st.cache_resource(show_spinner="Loading papers...")(demo_state.paper_space)
-
-
-@st.cache_resource
-def semcor_pool():
-    """Human-labelled (sentence, word, supersense) items cached by scripts/eval_ambiguity.py; empty if absent."""
-    p = ROOT / ".cache" / "semcor_120.json"
-    return json.loads(p.read_text()) if p.exists() else []
 
 
 def neighbors(q, E, texts, k=6):
@@ -147,36 +139,6 @@ with tab3:
             st.caption(f"e' = normalize(e + α·d), d = prototype(`{pick}`) minus the mean of the other prototypes. "
                        f"cos(original, steered) = {float(qe @ qs):.3f}. This chart is read with the same prototypes "
                        "that build d, so it always moves toward the pick: it shows the steering ran, nothing more.")
-
-            st.markdown("**4. Independent check: re-rank human-labelled SemCor sentences**")
-            pool = [(s, lab) for s, ww, lab in semcor_pool() if ww == w]
-            if not pool:
-                st.info(f"No human-labelled SemCor sentences with *{w}* available (run scripts/eval_ambiguity.py), "
-                        "so the pick cannot be checked independently.")
-                continue
-            S = embed([s for s, _ in pool])
-            gold = np.array([lab for _, lab in pool])
-            b, s_ = S @ qe, S @ qs
-            ob, oa = np.argsort(-b), np.argsort(-s_)
-            rank_b = np.empty(len(pool), int)
-            rank_b[ob] = np.arange(1, len(pool) + 1)
-            k = min(5, len(pool))
-            n_match = int((gold == pick).sum())
-            dist = ", ".join(f"`{lab}` {c}" for lab, c in Counter(gold).most_common())
-            if n_match == 0:
-                st.warning(f"None of the {len(pool)} labelled sentences with *{w}* has sense `{pick}` ({dist}). "
-                           "This check cannot confirm the pick: steering can only reorder sentences of other senses.")
-            c1, c2 = st.columns(2)
-            c1.markdown(f"Before steering (top {k} of {len(pool)})")
-            c1.dataframe([{"rank": i + 1, "score": round(float(b[j]), 3), "gold sense": gold[j],
-                           "sentence": pool[j][0][:120]} for i, j in enumerate(ob[:k])], hide_index=True)
-            c2.markdown(f"After steering toward `{pick}` (top {k})")
-            c2.dataframe([{"rank": i + 1, "was": int(rank_b[j]), "score": round(float(s_[j]), 3),
-                           "gold sense": gold[j], "match": "✓" if gold[j] == pick else "",
-                           "sentence": pool[j][0][:120]} for i, j in enumerate(oa[:k])], hide_index=True)
-            st.caption(f"Sentences whose human label is `{pick}` in the top {k}: {int((gold[ob[:k]] == pick).sum())} "
-                       f"before → {int((gold[oa[:k]] == pick).sum())} after ({n_match} of {len(pool)} in the pool: "
-                       f"{dist}). Tiny pools, so this is an illustration, not a measurement.")
 
 with tab4:
     st.subheader("Research scope map: 1,200 papers, 8 areas, start-here picks")
